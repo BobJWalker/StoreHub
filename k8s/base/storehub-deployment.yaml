@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storehub-deployment  
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      component: storehub-web
+  template:
+    metadata:
+      labels:
+        component: storehub-web
+    spec:
+      containers:
+        - name: storehub-web
+          image: bobjwalker99/storehub:6.0.9
+          imagePullPolicy: "Always"
+          ports:
+           - containerPort: 8080
+             name: http-port
+          env:
+           - name: STOREHUB_CONNECTION_STRING
+             valueFrom:
+               secretKeyRef:
+                 name: storehub-credentials
+                 key: connectionString  
+           - name: STOREHUB_SUMOLOGIC_URL
+             valueFrom:
+               secretKeyRef:
+                 name: storehub-credentials
+                 key: sumologicUrl
+           - name: STOREHUB_INSTANCE_URL
+             valueFrom:
+               secretKeyRef:
+                 name: storehub-credentials
+                 key: instanceUrl
+           - name: STOREHUB_INSTANCE_API_KEY
+             valueFrom:
+               secretKeyRef:
+                 name: storehub-credentials
+                 key: instanceApiKey
+           - name: STOREHUB_ENVIRONMENT
+             valueFrom:
+               secretKeyRef:
+                 name: storehub-credentials
+                 key: environment
+           - name: STOREHUB_OPEN_FEATURE_CLIENT_ID
+             valueFrom:
+               secretKeyRef:
+                 name: storehub-credentials
+                 key: openFeatureClientId
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storehub-app-cluster-ip-service  
+spec:
+  type: ClusterIP
+  selector:
+    component: storehub-web
+  ports:
+    - port: 6800
+      targetPort: 8080  
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: storehub-ingress-http-route
+  namespace: storehub
+spec:
+  parentRefs:
+  - name: public-gateway
+    namespace: traefik
+  hostnames:
+    - storehub.bobjwalker.local
+  rules:
+    - backendRefs:
+        - name: storehub-app-cluster-ip-service  
+          port: 6800 

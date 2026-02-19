@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "StoreHub.Web": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "STOREHUB_CONNECTION_STRING": "Server=K8sCluster;Integrated Security=False;Database=StoreHub_Local;trustServerCertificate=true;User Id=Local_Svc;Password=Password01!",
+        "STOREHUB_INSTANCE_URL": "https://bobjwalker.octopus.app",
+        "STOREHUB_INSTANCE_API_KEY": "blah",
+        "STOREHUB_INSTANCE_ID": "d5101c1a-fe43-4848-b2a3-283466122104"
+      },
+      "applicationUrl": "https://localhost:57512;http://localhost:57513"
+    }
+  }
+}

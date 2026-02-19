@@ -1,0 +1,8 @@
+{
+    "profiles": {
+      "StoreHub.Database.DbUp": {
+        "commandName": "Project",
+        "commandLineArgs": "--ConnectionString=\"Server=(localdb)\\MSSQLLocalDB;Integrated Security=true;Database=StoreHub;\" --PreviewReportPath=\"C:\\DatabaseReports\""
+      }
+    }
+  }
