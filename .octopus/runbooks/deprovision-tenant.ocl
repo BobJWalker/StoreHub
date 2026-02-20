@@ -1,7 +1,7 @@
 name = "Deprovision Tenant"
 default_guided_failure_mode = "EnvironmentDefault"
 description = "Runbook that will deprovision the tenant infrastructure when the tenant is no longer needed."
-multi_tenancy_mode = "Tenanted"
+multi_tenancy_mode = "TenantedOrUntenanted"
 
 connectivity_policy {
     allow_deployments_to_no_targets = true
@@ -28,107 +28,43 @@ process {
         }
     }
 
-    step "destroy-k8s-infrastructure-delete-kubernetes-namespace" {
-        name = "Destroy K8s Infrastructure-Delete Kubernetes Namespace"
-        properties = {
-            Octopus.Action.TargetRoles = "#{Template.Kubernetes.TargetTags}"
+    process_template "destroy-container-infrastructure" {
+        name = "Destroy Container Infrastructure"
+        process_template_slug = "runbook-destroy-container-infrastructure"
+        version_mask = "1.X"
+
+        parameter "Template.Kubernetes.Namespace.Name" {
+            value = "#{Standards.K8s.Namespace}"
         }
 
-        action {
-            action_type = "Octopus.KubernetesRunScript"
-            notes = <<-EOT
-                    **Always Runs**
-                    
-                    Deletes the tenant namespace from the Kubernetes Cluster.
-                    EOT
-            properties = {
-                Octopus.Action.Blueprint.ConsumingAction.Name = "Destroy K8s Infrastructure"
-                Octopus.Action.Script.ScriptBody = <<-EOT
-                    $namespace = $OctopusParameters["Template.Kubernetes.Namespace.Name"]
-                    
-                    kubectl delete namespace $namespace --now --wait
-                        
-                    if ($lastexitcode -eq 0)
-                    {
-                         write-host "The namespace $namespace was successfully deleted."
-                    }
-                    else
-                    {
-                         Write-Host "There was an error deleting the namespace $namespace.  Please check the Cluster UI to verify a deletion has occurred."
-                         Exit 0
-                    }
-                    EOT
-                Octopus.Action.Script.ScriptSource = "Inline"
-                Octopus.Action.Script.Syntax = "PowerShell"
-                Octopus.ProcessTemplate.Slug = "runbook-destroy-container-infrastructure"
-                Octopus.ProcessTemplate.Version = "1.0.1"
-                Template.Kubernetes.Namespace.Name = "#{Standards.K8s.Namespace}"
-                Template.Kubernetes.TargetTags = "trident-web"
-            }
-            worker_pool_variable = ""
+        parameter "Template.Kubernetes.TargetTags" {
+            value = "trident-web"
         }
     }
 
-    step "run-a-process-template-sql-delete-database" {
-        name = "Run a Process Template-SQL Delete Database"
+    process_template "destroy-database-infrastructure" {
+        name = "Destroy Database Infrastructure"
+        process_template_slug = "runbook-destroy-database-infrastructure"
+        version_mask = "1.X"
 
-        action {
-            action_type = "Octopus.Script"
-            notes = <<-EOT
-                    **Always Runs**
-                    
-                    Deletes the database from SQL Server
-                    EOT
-            properties = {
-                Octopus.Action.Blueprint.ConsumingAction.Name = "Run a Process Template"
-                Octopus.Action.Script.ScriptBody = <<-EOT
-                    $createSqlServer = $OctopusParameters["Template.SQLServer.Name"]
-                    $createSqlLoginUserWhoHasCreateUserRights = $OctopusParameters["Template.SQLServer.User.Name"]
-                    $createSqlLoginPasswordWhoHasRights = $OctopusParameters["Template.SQLServer.User.Password"]
-                    $deleteDatabaseName = $OctopusParameters["Template.SQLServer.Database.Name"]
-                    
-                    if ([string]::IsNullOrWhiteSpace($createSqlLoginUserWhoHasCreateUserRights) -eq $true){
-                    	Write-Host "No username found, using integrated security"
-                        $connectionString = "Server=$createSqlServer;Database=master;integrated security=true;"
-                    }
-                    else {
-                    	Write-Host "Username found, using SQL Authentication"
-                        $connectionString = "Server=$createSqlServer;Database=master;User ID=$createSqlLoginUserWhoHasCreateUserRights;Password=$createSqlLoginPasswordWhoHasRights;"
-                    }
-                    
-                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection
-                    $sqlConnection.ConnectionString = $connectionString
-                    
-                    $command = $sqlConnection.CreateCommand()
-                    $command.CommandType = [System.Data.CommandType]'Text'
-                    
-                    Write-Host "Opening the connection to $createSqlServer"
-                    $sqlConnection.Open()
-                    
-                    $escapedDatabaseName = $deleteDatabaseName.Replace("'", "''")
-                    
-                    Write-Host "Running the if exists then delete for $createDatabaseName"
-                    $command.CommandText = "IF EXISTS (select Name from sys.databases where Name = '$escapedDatabaseName')
-                            drop database [$deleteDatabaseName]"            
-                    $command.ExecuteNonQuery()
-                    
-                    
-                    Write-Host "Successfully dropped the database $createDatabaseName"
-                    Write-Host "Closing the connection to $createSqlServer"
-                    $sqlConnection.Close()
-                    EOT
-                Octopus.Action.Script.ScriptSource = "Inline"
-                Octopus.Action.Script.Syntax = "PowerShell"
-                Octopus.ProcessTemplate.Slug = "runbook-destroy-database-infrastructure"
-                Octopus.ProcessTemplate.Version = "1.0.0"
-                OctopusUseBundledTooling = "False"
-                Template.SQLServer.Database.Name = "#{Standards.Database.Name}"
-                Template.SQLServer.Name = "#{KeyVault.SQLServer.Server.Name}"
-                Template.SQLServer.User.Name = "#{KeyVault.SQLServer.User.Name}"
-                Template.SQLServer.User.Password = "#{KeyVault.SQLServer.User.Password}"
-                Template.WorkerPool = "#{Standards.Worker.Pool}"
-            }
-            worker_pool_variable = "#{Template.WorkerPool}"
+        parameter "Template.SQLServer.Name" {
+            value = "#{KeyVault.SQLServer.Server.Name}"
+        }
+
+        parameter "Template.SQLServer.User.Name" {
+            value = "#{KeyVault.SQLServer.User.Name}"
+        }
+
+        parameter "Template.SQLServer.User.Password" {
+            value = "#{KeyVault.SQLServer.User.Password}"
+        }
+
+        parameter "Template.SQLServer.Database.Name" {
+            value = "#{Standards.Database.Name}"
+        }
+
+        parameter "Template.WorkerPool" {
+            value = "#{Standards.Worker.Pool}"
         }
     }
 
