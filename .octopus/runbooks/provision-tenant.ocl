@@ -1,7 +1,7 @@
 name = "Provision Tenant"
 default_guided_failure_mode = "EnvironmentDefault"
 description = "Runbook that will create the necessary infrastructure on the Kubernetes cluster and in the SQL Server needed by the application."
-multi_tenancy_mode = "Tenanted"
+multi_tenancy_mode = "TenantedOrUntenanted"
 
 connectivity_policy {
     allow_deployments_to_no_targets = true
