@@ -1,7 +1,7 @@
 name = "Deprovision Tenant"
 default_guided_failure_mode = "EnvironmentDefault"
 description = "Runbook that will deprovision the tenant infrastructure when the tenant is no longer needed."
-multi_tenancy_mode = "Tenanted"
+multi_tenancy_mode = "TenantedOrUntenanted"
 
 connectivity_policy {
     allow_deployments_to_no_targets = true
