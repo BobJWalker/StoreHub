@@ -8,7 +8,9 @@ connectivity_policy {
 }
 
 run_retention_policy {
-    type = "Default"
+    quantity_to_keep = 5
+    type = "Count"
+    unit = "Days"
 }
 
 process {
