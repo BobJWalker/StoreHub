@@ -52,6 +52,7 @@ step "check-tenant-infrastructure" {
 
     action {
         channels = ["default"]
+        is_disabled = true
         properties = {
             Octopus.Action.Template.Id = "ActionTemplates-141"
             Octopus.Action.Template.Version = "18"
