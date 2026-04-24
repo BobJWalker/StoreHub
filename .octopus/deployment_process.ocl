@@ -47,35 +47,6 @@ process_template "verify-build-artifacts" {
     }
 }
 
-step "check-tenant-infrastructure" {
-    name = "Check Tenant Infrastructure"
-
-    action {
-        channels = ["default"]
-        is_disabled = true
-        properties = {
-            Octopus.Action.Template.Id = "ActionTemplates-141"
-            Octopus.Action.Template.Version = "18"
-            Run.Runbook.Api.Key = "#{KeyVault.Octopus.Api.Key}"
-            Run.Runbook.AutoApproveManualInterventions = "No"
-            Run.Runbook.Base.Url = "#{Octopus.Web.ServerUri}"
-            Run.Runbook.CancelInSeconds = "1800"
-            Run.Runbook.CustomNotes.Toggle = "False"
-            Run.Runbook.DateTime = "N/A"
-            Run.Runbook.Environment.Name = "#{Octopus.Environment.Name}"
-            Run.Runbook.Machines = "N/A"
-            Run.Runbook.ManualIntervention.EnvironmentToUse = "#{Octopus.Environment.Name}"
-            Run.Runbook.Name = "Provision Tenant"
-            Run.Runbook.Project.Name = "#{Octopus.Project.Name}"
-            Run.Runbook.Space.Name = "#{Octopus.Space.Name}"
-            Run.Runbook.Tenant.Name = "#{Octopus.Deployment.Tenant.Name}"
-            Run.Runbook.UsePublishedSnapShot = "True"
-            Run.Runbook.Waitforfinish = "True"
-        }
-        worker_pool_variable = "Standards.Worker.Pool"
-    }
-}
-
 process_template "deploy-database-changes" {
     name = "Deploy Database Changes"
     process_template_slug = "deploy-database"
